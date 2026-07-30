@@ -86,8 +86,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _searchResults.value = emptyList()
         } else {
             _searchResults.value = allAppsCache.filter {
-                it.name.contains(query, ignoreCase = true) || 
-                it.packageName.contains(query, ignoreCase = true)
+                it.name.startsWith(query, ignoreCase = true) || 
+                it.packageName.split('.').any { segment -> 
+                    segment.startsWith(query, ignoreCase = true) 
+                }
             }
         }
     }
