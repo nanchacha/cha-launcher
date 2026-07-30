@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -132,6 +133,20 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                     }
                 }
             }
+
+            // Reset Setup Button
+            Text(
+                text = "Reset",
+                color = Color.White,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable { viewModel.resetSetup() }
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            )
         }
 
         // Search Bar Area

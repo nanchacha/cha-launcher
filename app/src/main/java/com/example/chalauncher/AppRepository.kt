@@ -17,6 +17,10 @@ class AppRepository(private val context: Context) {
         prefs.edit().putBoolean("setup_completed", completed).apply()
     }
 
+    fun resetSetupState() {
+        prefs.edit().putBoolean("setup_completed", false).apply()
+    }
+
     fun getSelectedAppPackages(): Set<String> {
         return prefs.getStringSet("selected_apps", emptySet()) ?: emptySet()
     }

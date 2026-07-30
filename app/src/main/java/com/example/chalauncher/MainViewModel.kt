@@ -80,6 +80,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun resetSetup() {
+        repository.resetSetupState()
+        _appState.value = AppState.SETUP
+    }
+
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
         if (query.isBlank()) {
