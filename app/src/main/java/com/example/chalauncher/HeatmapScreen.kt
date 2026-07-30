@@ -1,5 +1,7 @@
 package com.example.chalauncher
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -134,19 +136,40 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 }
             }
 
-            // Reset Setup Button
-            Text(
-                text = "Reset",
-                color = Color.White,
-                fontSize = 12.sp,
+            // Settings Row (Default Launcher & Reset)
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable { viewModel.resetSetup() }
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            )
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Default Launcher Button
+                Text(
+                    text = "기본 런처 설정",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clickable {
+                            val intent = Intent(Settings.ACTION_HOME_SETTINGS)
+                            context.startActivity(intent)
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+
+                // Reset Setup Button
+                Text(
+                    text = "초기화",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clickable { viewModel.resetSetup() }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
         }
 
         // Search Bar Area
