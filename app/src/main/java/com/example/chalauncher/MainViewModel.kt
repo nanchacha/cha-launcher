@@ -116,4 +116,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _searchQuery.value = ""
         _searchResults.value = emptyList()
     }
+
+    fun removeApp(packageName: String) {
+        repository.removeAppFromSelected(packageName)
+        loadApps(filterSelected = true)
+    }
 }

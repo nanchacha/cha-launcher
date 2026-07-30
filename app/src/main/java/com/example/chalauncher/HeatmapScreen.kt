@@ -2,10 +2,12 @@ package com.example.chalauncher
 
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HeatmapScreen(viewModel: MainViewModel) {
     val apps by viewModel.apps.collectAsState()
@@ -38,6 +41,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     val searchResults by viewModel.searchResults.collectAsState()
     val allApps by viewModel.allApps.collectAsState()
     var showAllApps by remember { mutableStateOf(false) }
+    var appToRemove by remember { mutableStateOf<AppInfo?>(null) }
     val context = LocalContext.current
 
     if (showAllApps) {
@@ -53,6 +57,27 @@ fun HeatmapScreen(viewModel: MainViewModel) {
             }
         )
         return
+    }
+
+    if (appToRemove != null) {
+        AlertDialog(
+            onDismissRequest = { appToRemove = null },
+            title = { Text("히트맵에서 제거") },
+            text = { Text("${appToRemove?.name} 앱을 히트맵에서 제거하시겠습니까?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    appToRemove?.let { viewModel.removeApp(it.packageName) }
+                    appToRemove = null
+                }) {
+                    Text("제거")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { appToRemove = null }) {
+                    Text("취소")
+                }
+            }
+        )
     }
 
     if (apps.isEmpty()) {
@@ -76,12 +101,17 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                         .fillMaxSize()
                         .background(backgroundColor)
                         .border(1.dp, Color.Black)
-                        .clickable {
-                            app.launchIntent?.let {
-                                viewModel.onAppClicked(app)
-                                context.startActivity(it)
+                        .combinedClickable(
+                            onClick = {
+                                app.launchIntent?.let {
+                                    viewModel.onAppClicked(app)
+                                    context.startActivity(it)
+                                }
+                            },
+                            onLongClick = {
+                                appToRemove = app
                             }
-                        }
+                        )
                 ) {
                     Column(
                         modifier = Modifier.align(Alignment.Center),

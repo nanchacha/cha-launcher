@@ -36,6 +36,13 @@ class AppRepository(private val context: Context) {
         }
     }
 
+    fun removeAppFromSelected(packageName: String) {
+        val current = getSelectedAppPackages().toMutableSet()
+        if (current.remove(packageName)) {
+            saveSelectedAppPackages(current)
+        }
+    }
+
     suspend fun getInstalledApps(filterSelected: Boolean = false): List<AppInfo> = withContext(Dispatchers.IO) {
         val pm = context.packageManager
         val intent = Intent(Intent.ACTION_MAIN, null).apply {
