@@ -82,7 +82,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetSetup() {
         repository.resetSetupState()
+        _selectedPackages.value = emptySet()
+        repository.saveSelectedAppPackages(emptySet())
         _appState.value = AppState.SETUP
+        loadApps(filterSelected = false)
     }
 
     fun updateSearchQuery(query: String) {
