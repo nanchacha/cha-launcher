@@ -75,6 +75,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (_selectedPackages.value.isNotEmpty()) {
             repository.saveSelectedAppPackages(_selectedPackages.value)
             repository.setSetupCompleted(true)
+            _searchQuery.value = ""
+            _searchResults.value = emptyList()
             _appState.value = AppState.HOME
             loadApps(filterSelected = true)
         }

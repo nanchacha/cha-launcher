@@ -28,6 +28,9 @@ import androidx.core.graphics.drawable.toBitmap
 fun SetupScreen(viewModel: MainViewModel) {
     val apps by viewModel.apps.collectAsState()
     val selectedPackages by viewModel.selectedPackages.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val displayApps = if (searchQuery.isNotEmpty()) searchResults else apps
 
     Scaffold(
         topBar = {
@@ -49,20 +52,37 @@ fun SetupScreen(viewModel: MainViewModel) {
             }
         }
     ) { paddingValues ->
-        if (apps.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                contentPadding = paddingValues,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(apps) { app ->
-                    val isSelected = selectedPackages.contains(app.packageName)
-                    AppSelectionItem(app = app, isSelected = isSelected) {
-                        viewModel.toggleAppSelection(app.packageName)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.updateSearchQuery(it) },
+                placeholder = { Text("Search apps...") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(24.dp),
+                singleLine = true
+            )
+
+            if (apps.isEmpty()) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    contentPadding = PaddingValues(8.dp),
+                    modifier = Modifier.weight(1f).fillMaxWidth()
+                ) {
+                    items(displayApps) { app ->
+                        val isSelected = selectedPackages.contains(app.packageName)
+                        AppSelectionItem(app = app, isSelected = isSelected) {
+                            viewModel.toggleAppSelection(app.packageName)
+                        }
                     }
                 }
             }
