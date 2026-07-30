@@ -29,6 +29,13 @@ class AppRepository(private val context: Context) {
         prefs.edit().putStringSet("selected_apps", packages).apply()
     }
 
+    fun addAppToSelected(packageName: String) {
+        val current = getSelectedAppPackages().toMutableSet()
+        if (current.add(packageName)) {
+            saveSelectedAppPackages(current)
+        }
+    }
+
     suspend fun getInstalledApps(filterSelected: Boolean = false): List<AppInfo> = withContext(Dispatchers.IO) {
         val pm = context.packageManager
         val intent = Intent(Intent.ACTION_MAIN, null).apply {

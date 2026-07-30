@@ -99,10 +99,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun onAppClicked(appInfo: AppInfo) {
-        repository.incrementClickCount(appInfo.packageName)
+    fun onAppClicked(app: AppInfo) {
+        repository.addAppToSelected(app.packageName)
+        repository.incrementClickCount(app.packageName)
+        loadApps(filterSelected = true)
         _searchQuery.value = ""
         _searchResults.value = emptyList()
-        loadApps(filterSelected = true)
     }
 }
