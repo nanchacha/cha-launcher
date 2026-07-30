@@ -16,6 +16,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,7 +36,24 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     val apps by viewModel.apps.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
+    val allApps by viewModel.allApps.collectAsState()
+    var showAllApps by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    if (showAllApps) {
+        AllAppsOverlay(
+            allApps = allApps,
+            onClose = { showAllApps = false },
+            onAppClick = { app ->
+                app.launchIntent?.let {
+                    viewModel.onAppClicked(app)
+                    context.startActivity(it)
+                }
+                showAllApps = false
+            }
+        )
+        return
+    }
 
     if (apps.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -61,10 +81,12 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                                 viewModel.onAppClicked(app)
                                 context.startActivity(it)
                             }
-                        },
-                    contentAlignment = Alignment.Center
+                        }
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
                             Image(
                                 bitmap = bmp.asImageBitmap(),
@@ -87,7 +109,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 }
             }
 
-            // Search Overlay
+            // Search Overlay (when querying)
             if (searchQuery.isNotEmpty()) {
                 Box(
                     modifier = Modifier
@@ -96,22 +118,19 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 ) {
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(4),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(8.dp)
+                        contentPadding = PaddingValues(16.dp),
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         items(searchResults) { app ->
                             Column(
                                 modifier = Modifier
                                     .padding(8.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.surface)
                                     .clickable {
                                         app.launchIntent?.let {
                                             viewModel.onAppClicked(app)
                                             context.startActivity(it)
                                         }
-                                    }
-                                    .padding(8.dp),
+                                    },
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
@@ -128,7 +147,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = Color.White
                                 )
                             }
                         }
@@ -143,6 +162,18 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // All Apps Button
+                Text(
+                    text = "전체 앱",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clickable { showAllApps = true }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+
                 // Default Launcher Button
                 Text(
                     text = "기본 런처 설정",
@@ -190,6 +221,58 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 shape = RoundedCornerShape(24.dp),
                 singleLine = true
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AllAppsOverlay(allApps: List<AppInfo>, onClose: () -> Unit, onAppClick: (AppInfo) -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("전체 앱") },
+                navigationIcon = {
+                    Text(
+                        text = "←",
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .clickable { onClose() },
+                        fontSize = 24.sp
+                    )
+                }
+            )
+        }
+    ) { paddingValues ->
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            contentPadding = paddingValues,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(allApps) { app ->
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable { onAppClick(app) },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
+                        Image(
+                            bitmap = bmp.asImageBitmap(),
+                            contentDescription = app.name,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = app.name,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }

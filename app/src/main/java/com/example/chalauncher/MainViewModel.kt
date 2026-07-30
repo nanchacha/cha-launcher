@@ -21,7 +21,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _apps = MutableStateFlow<List<AppInfo>>(emptyList())
     val apps: StateFlow<List<AppInfo>> = _apps.asStateFlow()
     
-    private var allAppsCache: List<AppInfo> = emptyList()
+    private val _allApps = MutableStateFlow<List<AppInfo>>(emptyList())
+    val allApps: StateFlow<List<AppInfo>> = _allApps.asStateFlow()
+
+    internal var allAppsCache: List<AppInfo> = emptyList()
 
     private val _selectedPackages = MutableStateFlow<Set<String>>(emptySet())
     val selectedPackages: StateFlow<Set<String>> = _selectedPackages.asStateFlow()
@@ -54,7 +57,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val fetched = repository.getInstalledApps(filterSelected = filterSelected)
             _apps.value = fetched
             // Update cache silently
-            allAppsCache = repository.getInstalledApps(filterSelected = false)
+            val allAppsList = repository.getInstalledApps(filterSelected = false)
+            allAppsCache = allAppsList
+            _allApps.value = allAppsList.sortedBy { it.name.lowercase() }
             updateSearchQuery(_searchQuery.value)
         }
     }
