@@ -49,19 +49,7 @@ class AppRepository(private val context: Context) {
             AppInfo(packageName, appName, icon, launchIntent, clickCount)
         }
 
-        // Add 20 dummy apps for testing
-        val dummyApps = (1..20).mapNotNull { i ->
-            val packageName = "com.dummy.app$i"
-            if (filterSelected && !selectedPackages.contains(packageName)) return@mapNotNull null
-            
-            val appName = "더미 앱 $i"
-            // Use default Android icon
-            val icon = context.getDrawable(android.R.drawable.sym_def_app_icon)!!
-            val clickCount = prefs.getInt(packageName, 1)
-            AppInfo(packageName, appName, icon, null, clickCount)
-        }
-
-        return@withContext (realApps + dummyApps).sortedByDescending { it.clickCount }
+        return@withContext realApps.sortedByDescending { it.clickCount }
     }
 
     fun incrementClickCount(packageName: String) {
