@@ -8,6 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,26 +36,32 @@ class MainActivity : ComponentActivity() {
       }
       
       ChaLauncherTheme(darkTheme = isDarkTheme) { 
-        Surface(
-            modifier = Modifier.fillMaxSize().safeDrawingPadding(), 
-            color = MaterialTheme.colorScheme.background
-        ) { 
-          val appState by viewModel.appState.collectAsState()
-          
-          when (appState) {
-              AppState.LOADING -> {
-                  Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                      CircularProgressIndicator()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize().safeDrawingPadding(), 
+                color = MaterialTheme.colorScheme.background
+            ) { 
+              val appState by viewModel.appState.collectAsState()
+              
+              when (appState) {
+                  AppState.LOADING -> {
+                      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                          CircularProgressIndicator()
+                      }
+                  }
+                  AppState.SETUP -> {
+                      SetupScreen(viewModel)
+                  }
+                  AppState.HOME -> {
+                      HeatmapScreen(viewModel) 
                   }
               }
-              AppState.SETUP -> {
-                  SetupScreen(viewModel)
-              }
-              AppState.HOME -> {
-                  HeatmapScreen(viewModel) 
-              }
-          }
-        } 
+            } 
+        }
       }
     }
   }
