@@ -85,6 +85,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _selectedPackages.value = current
     }
 
+    fun toggleAppPin(packageName: String) {
+        if (repository.getSelectedAppPackages().contains(packageName)) {
+            repository.removeAppFromSelected(packageName)
+        } else {
+            repository.addAppToSelected(packageName)
+        }
+        loadApps(filterSelected = true)
+    }
+
     fun completeSetup() {
         if (_selectedPackages.value.isNotEmpty()) {
             repository.saveSelectedAppPackages(_selectedPackages.value)

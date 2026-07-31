@@ -23,6 +23,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -61,6 +62,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     var showAllApps by remember { mutableStateOf(false) }
     var appToRemove by remember { mutableStateOf<AppInfo?>(null) }
     var menuExpanded by remember { mutableStateOf(false) }
+    var showPinApps by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val weatherState by viewModel.weatherState.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
@@ -98,6 +100,17 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 }
                 showAllApps = false
             }
+        )
+        return
+    }
+
+    if (showPinApps) {
+        val allAppsList by viewModel.allApps.collectAsState()
+        PinAppsOverlay(
+            allApps = allAppsList,
+            selectedPackages = apps.map { it.packageName }.toSet(),
+            onClose = { showPinApps = false },
+            onTogglePin = { app -> viewModel.toggleAppPin(app.packageName) }
         )
         return
     }
@@ -277,6 +290,13 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                             }
                         )
                         DropdownMenuItem(
+                            text = { Text("앱 추가/제거 (고정)") },
+                            onClick = {
+                                menuExpanded = false
+                                showPinApps = true
+                            }
+                        )
+                        DropdownMenuItem(
                             text = { Text("기본 런처 설정") },
                             onClick = {
                                 menuExpanded = false
@@ -348,6 +368,82 @@ fun AllAppsOverlay(allApps: List<AppInfo>, onClose: () -> Unit, onAppClick: (App
                             contentDescription = app.name,
                             modifier = Modifier.size(48.dp)
                         )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = app.name,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PinAppsOverlay(
+    allApps: List<AppInfo>, 
+    selectedPackages: Set<String>, 
+    onClose: () -> Unit, 
+    onTogglePin: (AppInfo) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("앱 추가/제거 (고정)") },
+                navigationIcon = {
+                    Text(
+                        text = "←",
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .clickable { onClose() },
+                        fontSize = 24.sp
+                    )
+                }
+            )
+        }
+    ) { paddingValues ->
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            contentPadding = paddingValues,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(allApps) { app ->
+                val isSelected = selectedPackages.contains(app.packageName)
+                val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(backgroundColor)
+                        .clickable { onTogglePin(app) }
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(contentAlignment = Alignment.TopEnd) {
+                        app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
+                            Image(
+                                bitmap = bmp.asImageBitmap(),
+                                contentDescription = app.name,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                        if (isSelected) {
+                            Text(
+                                text = "✓",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 16.sp,
+                                modifier = Modifier
+                                    .offset(x = 8.dp, y = (-8).dp)
+                                    .background(Color.White, RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 4.dp)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
