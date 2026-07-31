@@ -184,15 +184,17 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                                     .padding(4.dp)
                             )
                         }
-                        Text(
-                            text = app.name,
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
+                        if (app.clickCount > 1) {
+                            Text(
+                                text = app.name,
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
                     }
                 }
             }
