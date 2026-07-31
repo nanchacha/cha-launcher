@@ -42,6 +42,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     val allApps by viewModel.allApps.collectAsState()
     var showAllApps by remember { mutableStateOf(false) }
     var appToRemove by remember { mutableStateOf<AppInfo?>(null) }
+    var menuExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     if (showAllApps) {
@@ -185,52 +186,6 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 }
             }
 
-            // Settings Row (Default Launcher & Reset)
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // All Apps Button
-                Text(
-                    text = "전체 앱",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .clickable { showAllApps = true }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                )
-
-                // Default Launcher Button
-                Text(
-                    text = "기본 런처 설정",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .clickable {
-                            val intent = Intent(Settings.ACTION_HOME_SETTINGS)
-                            context.startActivity(intent)
-                        }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                )
-
-                // Reset Setup Button
-                Text(
-                    text = "초기화",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .clickable { viewModel.resetSetup() }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                )
-            }
         }
 
         // Search Bar Area
@@ -238,19 +193,63 @@ fun HeatmapScreen(viewModel: MainViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             contentAlignment = Alignment.Center
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.updateSearchQuery(it) },
-                placeholder = { Text("Search apps...") },
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp)),
-                shape = RoundedCornerShape(24.dp),
-                singleLine = true
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.updateSearchQuery(it) },
+                    placeholder = { Text("Search apps...") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp)),
+                    shape = RoundedCornerShape(24.dp),
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Text(
+                            text = "☰",
+                            fontSize = 24.sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("전체 앱") },
+                            onClick = {
+                                menuExpanded = false
+                                showAllApps = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("기본 런처 설정") },
+                            onClick = {
+                                menuExpanded = false
+                                val intent = Intent(Settings.ACTION_HOME_SETTINGS)
+                                context.startActivity(intent)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("초기화") },
+                            onClick = {
+                                menuExpanded = false
+                                viewModel.resetSetup()
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }
