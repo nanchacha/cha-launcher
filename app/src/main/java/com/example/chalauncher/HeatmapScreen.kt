@@ -14,6 +14,7 @@ import com.example.chalauncher.data.WeatherState
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import android.annotation.SuppressLint
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -62,18 +63,23 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     val context = LocalContext.current
     val weatherState by viewModel.weatherState.collectAsState()
     
+    var hasLocationPermission by remember { 
+        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) 
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
-            if (isGranted) {
-                fetchLocationAndWeather(context, viewModel)
-            }
+            hasLocationPermission = isGranted
         }
     )
 
-    LaunchedEffect(Unit) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fetchLocationAndWeather(context, viewModel)
+    LaunchedEffect(hasLocationPermission) {
+        if (hasLocationPermission) {
+            while (true) {
+                fetchLocationAndWeather(context, viewModel)
+                delay(15 * 60 * 1000L) // 15 minutes
+            }
         } else {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
