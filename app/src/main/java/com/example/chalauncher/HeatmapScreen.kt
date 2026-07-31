@@ -184,7 +184,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                                     .padding(4.dp)
                             )
                         }
-                        if (app.clickCount > 1) {
+                        if (app.clickCount > 4) {
                             Text(
                                 text = app.name,
                                 color = Color.White,
