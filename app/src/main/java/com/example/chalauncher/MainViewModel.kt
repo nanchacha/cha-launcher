@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.chalauncher.data.WeatherRepository
+import com.example.chalauncher.data.WeatherState
 
 enum class AppState {
     LOADING, SETUP, HOME
@@ -14,6 +16,7 @@ enum class AppState {
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = AppRepository(application)
+    private val weatherRepository = WeatherRepository()
 
     private val _appState = MutableStateFlow(AppState.LOADING)
     val appState: StateFlow<AppState> = _appState.asStateFlow()
@@ -34,6 +37,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _searchResults = MutableStateFlow<List<AppInfo>>(emptyList())
     val searchResults: StateFlow<List<AppInfo>> = _searchResults.asStateFlow()
+
+    private val _weatherState = MutableStateFlow<WeatherState>(WeatherState.Initial)
+    val weatherState: StateFlow<WeatherState> = _weatherState.asStateFlow()
 
     init {
         checkInitialState()
@@ -120,5 +126,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun removeApp(packageName: String) {
         repository.removeAppFromSelected(packageName)
         loadApps(filterSelected = true)
+    }
+
+    fun fetchWeather(lat: Double, lon: Double) {
+        _weatherState.value = WeatherState.Loading
+        viewModelScope.launch {
+            _weatherState.value = weatherRepository.fetchWeather(lat, lon)
+        }
     }
 }

@@ -2,6 +2,15 @@ package com.example.chalauncher
 
 import android.content.Intent
 import android.provider.Settings
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.ContextCompat
+import com.example.chalauncher.data.WeatherState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,9 +38,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -44,6 +57,46 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     var appToRemove by remember { mutableStateOf<AppInfo?>(null) }
     var menuExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val weatherState by viewModel.weatherState.collectAsState()
+    
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                if (isNetworkEnabled) {
+                    try {
+                        val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                        if (location != null) {
+                            viewModel.fetchWeather(location.latitude, location.longitude)
+                        } else {
+                            // Location not available yet
+                        }
+                    } catch (e: SecurityException) {
+                        // Handle security exception
+                    }
+                }
+            }
+        }
+    )
+
+    LaunchedEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+            if (isNetworkEnabled) {
+                try {
+                    val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                    if (location != null) {
+                        viewModel.fetchWeather(location.latitude, location.longitude)
+                    }
+                } catch (e: SecurityException) {}
+            }
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
 
     if (showAllApps) {
         AllAppsOverlay(
@@ -91,6 +144,8 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     val maxClicks = apps.maxOfOrNull { it.clickCount } ?: 1
 
     Column(modifier = Modifier.fillMaxSize()) {
+        DateWeatherHeader(weatherState)
+        
         Box(modifier = Modifier.weight(1f)) {
             // Background Treemap
             TreemapLayout(modifier = Modifier.fillMaxSize(), items = apps) { app ->
@@ -299,6 +354,83 @@ fun AllAppsOverlay(allApps: List<AppInfo>, onClose: () -> Unit, onAppClick: (App
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DateWeatherHeader(weatherState: WeatherState) {
+    val currentDate = remember {
+        LocalDate.now().format(DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN))
+    }
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = currentDate,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "좋은 하루 되세요!",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            )
+        }
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            when (weatherState) {
+                is WeatherState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                }
+                is WeatherState.Success -> {
+                    // map WMO weather code to emoji
+                    val emoji = when (weatherState.weatherCode) {
+                        0 -> "☀️" // Clear
+                        1, 2, 3 -> "⛅" // Partly cloudy
+                        45, 48 -> "🌫️" // Fog
+                        51, 53, 55, 56, 57 -> "🌧️" // Drizzle
+                        61, 63, 65, 66, 67 -> "🌧️" // Rain
+                        71, 73, 75, 77 -> "❄️" // Snow
+                        80, 81, 82 -> "🌧️" // Rain showers
+                        85, 86 -> "❄️" // Snow showers
+                        95, 96, 99 -> "⛈️" // Thunderstorm
+                        else -> "☁️"
+                    }
+                    Text(
+                        text = emoji,
+                        fontSize = 24.sp,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = "${weatherState.temperature}°C",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                is WeatherState.Error -> {
+                    Text(
+                        text = "날씨 오류",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                else -> {
+                    Text(
+                        text = "날씨 정보 없음",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
                 }
             }
