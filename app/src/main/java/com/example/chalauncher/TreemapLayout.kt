@@ -52,7 +52,12 @@ fun TreemapLayout(
                     androidx.compose.ui.unit.Constraints.fixed(itemWidth, itemHeight)
                 )
                 placeables.add(placeable)
-                positions.add(Pair(rect.x.toInt(), rect.y.toInt()))
+                
+                // Mirror coordinates so largest items (first in list) go to bottom-right
+                val mirroredX = width - rect.x - rect.w
+                val mirroredY = height - rect.y - rect.h
+                
+                positions.add(Pair(mirroredX.toInt(), mirroredY.toInt()))
             } else {
                 placeables.add(measurable.measure(androidx.compose.ui.unit.Constraints.fixed(0, 0)))
                 positions.add(Pair(0,0))
