@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import com.example.chalauncher.data.WeatherState
+import com.example.chalauncher.ThemeMode
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import android.annotation.SuppressLint
@@ -62,6 +63,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     var menuExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val weatherState by viewModel.weatherState.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     
     var hasLocationPermission by remember { 
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) 
@@ -287,6 +289,19 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                             onClick = {
                                 menuExpanded = false
                                 viewModel.resetSetup()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { 
+                                val themeText = when (themeMode) {
+                                    ThemeMode.SYSTEM -> "테마: 시스템"
+                                    ThemeMode.LIGHT -> "테마: 라이트"
+                                    ThemeMode.DARK -> "테마: 다크"
+                                }
+                                Text(themeText)
+                            },
+                            onClick = {
+                                viewModel.toggleThemeMode()
                             }
                         )
                     }

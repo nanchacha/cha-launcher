@@ -6,8 +6,25 @@ import android.content.pm.PackageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+enum class ThemeMode {
+    SYSTEM, LIGHT, DARK
+}
+
 class AppRepository(private val context: Context) {
     private val prefs = context.getSharedPreferences("app_usage_prefs", Context.MODE_PRIVATE)
+
+    fun getThemeMode(): ThemeMode {
+        val modeStr = prefs.getString("theme_mode", ThemeMode.SYSTEM.name) ?: ThemeMode.SYSTEM.name
+        return try {
+            ThemeMode.valueOf(modeStr)
+        } catch (e: Exception) {
+            ThemeMode.SYSTEM
+        }
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        prefs.edit().putString("theme_mode", mode.name).apply()
+    }
 
     fun isSetupCompleted(): Boolean {
         return prefs.getBoolean("setup_completed", false)

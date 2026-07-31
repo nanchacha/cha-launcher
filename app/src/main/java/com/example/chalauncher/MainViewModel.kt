@@ -21,6 +21,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _appState = MutableStateFlow(AppState.LOADING)
     val appState: StateFlow<AppState> = _appState.asStateFlow()
 
+    private val _themeMode = MutableStateFlow(repository.getThemeMode())
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
     private val _apps = MutableStateFlow<List<AppInfo>>(emptyList())
     val apps: StateFlow<List<AppInfo>> = _apps.asStateFlow()
     
@@ -133,5 +136,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _weatherState.value = weatherRepository.fetchWeather(lat, lon)
         }
+    }
+
+    fun toggleThemeMode() {
+        val current = _themeMode.value
+        val next = when (current) {
+            ThemeMode.SYSTEM -> ThemeMode.LIGHT
+            ThemeMode.LIGHT -> ThemeMode.DARK
+            ThemeMode.DARK -> ThemeMode.SYSTEM
+        }
+        _themeMode.value = next
+        repository.setThemeMode(next)
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.chalauncher.theme.ChaLauncherTheme
@@ -25,7 +26,14 @@ class MainActivity : ComponentActivity() {
 
     enableEdgeToEdge()
     setContent {
-      ChaLauncherTheme { 
+      val themeMode by viewModel.themeMode.collectAsState()
+      val isDarkTheme = when (themeMode) {
+          ThemeMode.SYSTEM -> isSystemInDarkTheme()
+          ThemeMode.LIGHT -> false
+          ThemeMode.DARK -> true
+      }
+      
+      ChaLauncherTheme(darkTheme = isDarkTheme) { 
         Surface(
             modifier = Modifier.fillMaxSize().safeDrawingPadding(), 
             color = MaterialTheme.colorScheme.background
