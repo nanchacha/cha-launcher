@@ -58,6 +58,7 @@ dependencies {
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.kotlinx.serialization.json)
+  implementation("com.google.android.gms:play-services-location:21.3.0")
 
   // Compose
   implementation(libs.androidx.compose.ui)

@@ -11,6 +11,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import com.example.chalauncher.data.WeatherState
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -63,36 +66,14 @@ fun HeatmapScreen(viewModel: MainViewModel) {
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             if (isGranted) {
-                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-                if (isNetworkEnabled) {
-                    try {
-                        val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-                        if (location != null) {
-                            viewModel.fetchWeather(location.latitude, location.longitude)
-                        } else {
-                            // Location not available yet
-                        }
-                    } catch (e: SecurityException) {
-                        // Handle security exception
-                    }
-                }
+                fetchLocationAndWeather(context, viewModel)
             }
         }
     )
 
     LaunchedEffect(Unit) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-            if (isNetworkEnabled) {
-                try {
-                    val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-                    if (location != null) {
-                        viewModel.fetchWeather(location.latitude, location.longitude)
-                    }
-                } catch (e: SecurityException) {}
-            }
+            fetchLocationAndWeather(context, viewModel)
         } else {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
@@ -434,6 +415,23 @@ fun DateWeatherHeader(weatherState: WeatherState) {
                     )
                 }
             }
+        }
+    }
+}
+
+@SuppressLint("MissingPermission")
+fun fetchLocationAndWeather(context: Context, viewModel: MainViewModel) {
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+        if (location != null) {
+            viewModel.fetchWeather(location.latitude, location.longitude)
+        } else {
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
+                .addOnSuccessListener { currentLoc ->
+                    if (currentLoc != null) {
+                        viewModel.fetchWeather(currentLoc.latitude, currentLoc.longitude)
+                    }
+                }
         }
     }
 }
