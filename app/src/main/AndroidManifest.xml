@@ -17,6 +17,7 @@
         android:theme="@style/Theme.ChaLauncher">
         <activity
             android:name=".MainActivity"
+            android:windowSoftInputMode="adjustResize|stateAlwaysHidden"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
