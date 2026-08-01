@@ -24,6 +24,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -157,8 +158,10 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(backgroundColor)
-                        .border(1.dp, Color.Black)
+                        .padding(2.dp)
+                        .shadow(6.dp, RoundedCornerShape(12.dp))
+                        .background(backgroundColor, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .combinedClickable(
                             onClick = {
                                 app.launchIntent?.let {
