@@ -8,5 +8,6 @@ data class AppInfo(
     val name: String,
     val icon: Drawable,
     val launchIntent: Intent?,
-    var clickCount: Int = 1
+    var clickCount: Int = 1,
+    var appCategory: Int = -1 // ApplicationInfo.CATEGORY_UNDEFINED is -1
 )

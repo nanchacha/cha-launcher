@@ -64,9 +64,24 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     var appToRemove by remember { mutableStateOf<AppInfo?>(null) }
     var menuExpanded by remember { mutableStateOf(false) }
     var showPinApps by remember { mutableStateOf(false) }
+    var categoryMenuExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val weatherState by viewModel.weatherState.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
+
+    val categories = mapOf(
+        null to "전체",
+        android.content.pm.ApplicationInfo.CATEGORY_PRODUCTIVITY to "생산성",
+        android.content.pm.ApplicationInfo.CATEGORY_SOCIAL to "소셜",
+        android.content.pm.ApplicationInfo.CATEGORY_GAME to "게임",
+        android.content.pm.ApplicationInfo.CATEGORY_AUDIO to "오디오/음악",
+        android.content.pm.ApplicationInfo.CATEGORY_VIDEO to "동영상",
+        android.content.pm.ApplicationInfo.CATEGORY_IMAGE to "이미지/사진",
+        android.content.pm.ApplicationInfo.CATEGORY_NEWS to "뉴스",
+        android.content.pm.ApplicationInfo.CATEGORY_MAPS to "지도",
+        -1 to "미지정"
+    )
     
     var hasLocationPermission by remember { 
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) 
@@ -266,6 +281,32 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Box {
+                    TextButton(
+                        onClick = { categoryMenuExpanded = true },
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text(
+                            text = categories[selectedCategory] ?: "전체",
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = categoryMenuExpanded,
+                        onDismissRequest = { categoryMenuExpanded = false }
+                    ) {
+                        categories.forEach { (catId, label) ->
+                            DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    viewModel.setCategoryFilter(catId)
+                                    categoryMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.updateSearchQuery(it) },

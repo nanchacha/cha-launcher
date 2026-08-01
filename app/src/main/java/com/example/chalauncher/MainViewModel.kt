@@ -44,6 +44,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _weatherState = MutableStateFlow<WeatherState>(WeatherState.Initial)
     val weatherState: StateFlow<WeatherState> = _weatherState.asStateFlow()
 
+    private val _selectedCategory = MutableStateFlow<Int?>(null)
+    val selectedCategory: StateFlow<Int?> = _selectedCategory.asStateFlow()
+
     init {
         checkInitialState()
         viewModelScope.launch {
@@ -64,13 +67,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun loadApps(filterSelected: Boolean) {
         viewModelScope.launch {
             val fetched = repository.getInstalledApps(filterSelected = filterSelected)
-            _apps.value = fetched
+            val currentCategory = _selectedCategory.value
+            _apps.value = if (currentCategory != null) {
+                fetched.filter { it.appCategory == currentCategory }
+            } else {
+                fetched
+            }
             // Update cache silently
             val allAppsList = repository.getInstalledApps(filterSelected = false)
             allAppsCache = allAppsList
             _allApps.value = allAppsList.sortedBy { it.name.lowercase() }
             updateSearchQuery(_searchQuery.value)
         }
+    }
+
+    fun setCategoryFilter(category: Int?) {
+        _selectedCategory.value = category
+        loadApps(filterSelected = _appState.value == AppState.HOME)
     }
 
     fun toggleAppSelection(packageName: String) {

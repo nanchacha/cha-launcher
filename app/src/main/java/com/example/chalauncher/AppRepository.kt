@@ -81,7 +81,12 @@ class AppRepository(private val context: Context) {
             val launchIntent = pm.getLaunchIntentForPackage(packageName)
             val clickCount = prefs.getInt(packageName, 1) // default weight is 1
             
-            AppInfo(packageName, appName, icon, launchIntent, clickCount)
+            var category = -1 // ApplicationInfo.CATEGORY_UNDEFINED
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                category = resolveInfo.activityInfo.applicationInfo.category
+            }
+            
+            AppInfo(packageName, appName, icon, launchIntent, clickCount, category)
         }
 
         return@withContext realApps.sortedByDescending { it.clickCount }
