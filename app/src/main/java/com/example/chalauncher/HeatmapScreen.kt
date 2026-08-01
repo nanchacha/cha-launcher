@@ -154,7 +154,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 val intensity = (app.clickCount.toFloat() / maxClicks).coerceIn(0.2f, 1f)
                 val backgroundColor = Color(0xFF4CAF50).copy(alpha = intensity)
 
-                Box(
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(backgroundColor)
@@ -171,16 +171,20 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                             }
                         )
                 ) {
+                    val boxSize = minOf(maxWidth, maxHeight)
+                    val iconSize = (boxSize * 0.6f).coerceIn(24.dp, 160.dp)
+                    val bitmapSize = iconSize.value.toInt().coerceAtLeast(120) * 2 // Ensure good resolution
+
                     Column(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
+                        app.icon.toBitmap(width = bitmapSize, height = bitmapSize)?.let { bmp ->
                             Image(
                                 bitmap = bmp.asImageBitmap(),
                                 contentDescription = app.name,
                                 modifier = Modifier
-                                    .size(48.dp)
+                                    .size(iconSize)
                                     .padding(4.dp)
                             )
                         }
