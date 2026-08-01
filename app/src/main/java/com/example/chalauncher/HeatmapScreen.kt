@@ -342,6 +342,25 @@ fun HeatmapScreen(viewModel: MainViewModel) {
             }
         }
     }
+
+    if (showSearchOverlay) {
+        SearchOverlay(
+            searchQuery = searchQuery,
+            searchResults = searchResults,
+            onQueryChange = { viewModel.updateSearchQuery(it) },
+            onAppClick = { app ->
+                app.launchIntent?.let {
+                    viewModel.onAppClicked(app)
+                    context.startActivity(it)
+                }
+                showSearchOverlay = false
+            },
+            onClose = { 
+                showSearchOverlay = false 
+                viewModel.updateSearchQuery("")
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
