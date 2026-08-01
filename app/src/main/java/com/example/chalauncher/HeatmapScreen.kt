@@ -560,6 +560,7 @@ fun fetchLocationAndWeather(context: Context, viewModel: MainViewModel) {
                 .addOnSuccessListener { currentLoc ->
                     if (currentLoc != null) {
                         viewModel.fetchWeather(currentLoc.latitude, currentLoc.longitude)
+                    }
                 }
         }
     }
