@@ -66,8 +66,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadApps(filterSelected: Boolean) {
         viewModelScope.launch {
-            val fetched = repository.getInstalledApps(filterSelected = filterSelected)
             val currentCategory = _selectedCategory.value
+            val actualFilterSelected = filterSelected && currentCategory == null
+            val fetched = repository.getInstalledApps(filterSelected = actualFilterSelected)
+            
             _apps.value = if (currentCategory != null) {
                 fetched.filter { it.appCategory == currentCategory }
             } else {
