@@ -39,6 +39,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -65,6 +69,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     var menuExpanded by remember { mutableStateOf(false) }
     var showPinApps by remember { mutableStateOf(false) }
     var categoryMenuExpanded by remember { mutableStateOf(false) }
+    var showSearchOverlay by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val weatherState by viewModel.weatherState.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
@@ -221,52 +226,6 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 }
             }
 
-            // Search Overlay (when querying)
-            if (searchQuery.isNotEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.7f))
-                ) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(4),
-                        contentPadding = PaddingValues(16.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(searchResults) { app ->
-                            Column(
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .clickable {
-                                        app.launchIntent?.let {
-                                            viewModel.onAppClicked(app)
-                                            context.startActivity(it)
-                                        }
-                                    },
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
-                                    Image(
-                                        bitmap = bmp.asImageBitmap(),
-                                        contentDescription = app.name,
-                                        modifier = Modifier.size(48.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = app.name,
-                                    fontSize = 12.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    textAlign = TextAlign.Center,
-                                    color = Color.White
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
         }
 
         // Search Bar Area
@@ -307,16 +266,20 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                     }
                 }
 
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { viewModel.updateSearchQuery(it) },
-                    placeholder = { Text("Search apps...") },
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp)),
-                    shape = RoundedCornerShape(24.dp),
-                    singleLine = true
-                )
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
+                        .clickable { showSearchOverlay = true }
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                ) {
+                    Text(
+                        text = if (searchQuery.isNotEmpty()) searchQuery else "Search apps...",
+                        color = if (searchQuery.isNotEmpty()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 
                 Spacer(modifier = Modifier.width(8.dp))
                 
@@ -597,8 +560,93 @@ fun fetchLocationAndWeather(context: Context, viewModel: MainViewModel) {
                 .addOnSuccessListener { currentLoc ->
                     if (currentLoc != null) {
                         viewModel.fetchWeather(currentLoc.latitude, currentLoc.longitude)
+                }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchOverlay(
+    searchQuery: String,
+    searchResults: List<AppInfo>,
+    onQueryChange: (String) -> Unit,
+    onAppClick: (AppInfo) -> Unit,
+    onClose: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    ) {
+        val focusRequester = remember { FocusRequester() }
+        
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.Black.copy(alpha = 0.9f)
+        ) {
+            Column(modifier = Modifier.fillMaxSize().statusBarsPadding().imePadding()) {
+                // Search Bar
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onClose) {
+                        Text("←", color = Color.White, fontSize = 24.sp)
+                    }
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = onQueryChange,
+                        placeholder = { Text("Search apps...") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester)
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp)),
+                        shape = RoundedCornerShape(24.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                }
+                
+                // Results Grid
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    contentPadding = PaddingValues(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(searchResults) { app ->
+                        Column(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .clickable { onAppClick(app) },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
+                                Image(
+                                    bitmap = bmp.asImageBitmap(),
+                                    contentDescription = app.name,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = app.name,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
+            }
         }
     }
 }
