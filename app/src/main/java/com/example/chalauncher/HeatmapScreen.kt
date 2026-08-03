@@ -185,33 +185,9 @@ fun HeatmapScreen(viewModel: MainViewModel) {
         HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
             if (page == 0) {
                 // Background Treemap
-                val smallAppBounds = remember { mutableStateMapOf<String, androidx.compose.ui.geometry.Rect>() }
                 Box(modifier = Modifier.fillMaxSize()) {
                     TreemapLayout(
-                        modifier = Modifier.fillMaxSize().drawWithContent {
-                            drawContent()
-                            if (smallAppBounds.isNotEmpty()) {
-                                var minX = Float.MAX_VALUE
-                                var minY = Float.MAX_VALUE
-                                var maxX = -Float.MAX_VALUE
-                                var maxY = -Float.MAX_VALUE
-                                smallAppBounds.values.forEach { rect ->
-                                    if (rect.left < minX) minX = rect.left
-                                    if (rect.top < minY) minY = rect.top
-                                    if (rect.right > maxX) maxX = rect.right
-                                    if (rect.bottom > maxY) maxY = rect.bottom
-                                }
-                                if (minX < maxX && minY < maxY) {
-                                    drawRoundRect(
-                                        color = Color(0xFF9C27B0),
-                                        topLeft = Offset(minX, minY),
-                                        size = Size(maxX - minX, maxY - minY),
-                                        cornerRadius = CornerRadius(14.dp.toPx(), 14.dp.toPx()),
-                                        style = Stroke(width = 3.dp.toPx())
-                                    )
-                                }
-                            }
-                        },
+                        modifier = Modifier.fillMaxSize(),
                         items = apps
                     ) { app ->
                         val intensity = (app.clickCount.toFloat() / maxClicks).coerceIn(0.2f, 1f)
@@ -222,13 +198,6 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(2.dp)
-                        .onGloballyPositioned { coordinates ->
-                            if (isSmallApp) {
-                                smallAppBounds[app.packageName] = coordinates.boundsInParent()
-                            } else {
-                                smallAppBounds.remove(app.packageName)
-                            }
-                        }
                         .shadow(6.dp, RoundedCornerShape(12.dp))
                         .background(backgroundColor, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
