@@ -28,6 +28,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -46,6 +48,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlin.math.absoluteValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -165,12 +169,15 @@ fun HeatmapScreen(viewModel: MainViewModel) {
     }
 
     val maxClicks = apps.maxOfOrNull { it.clickCount } ?: 1
+    val pagerState = rememberPagerState(pageCount = { 2 })
 
     Column(modifier = Modifier.fillMaxSize()) {
         DateWeatherHeader(weatherState)
         
-        Box(modifier = Modifier.weight(1f)) {
-            // Background Treemap
+        HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
+            if (page == 0) {
+                // Background Treemap
+                Box(modifier = Modifier.fillMaxSize()) {
             TreemapLayout(modifier = Modifier.fillMaxSize(), items = apps) { app ->
                 val intensity = (app.clickCount.toFloat() / maxClicks).coerceIn(0.2f, 1f)
                 val backgroundColor = Color(0xFF4CAF50).copy(alpha = intensity)
@@ -226,6 +233,62 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 }
             }
 
+                }
+            } else {
+                // Small Apps View
+                val smallApps = apps.filter { it.clickCount <= 6 }
+                
+                // Calculate animation properties based on pager offset
+                val pageOffset = (pagerState.currentPage - 1) + pagerState.currentPageOffsetFraction
+                // When we are fully on page 1, pageOffset is 0. 
+                // When on page 0, pageOffset is -1.
+                // We want scale to go from 0.7f to 1.0f as we swipe from page 0 to 1.
+                val scale = 1f - (pageOffset.absoluteValue * 0.3f).coerceIn(0f, 0.3f)
+                val alpha = 1f - (pageOffset.absoluteValue).coerceIn(0f, 1f)
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    contentPadding = PaddingValues(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            this.alpha = alpha
+                        }
+                ) {
+                    items(smallApps) { app ->
+                        Column(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .clickable {
+                                    app.launchIntent?.let {
+                                        viewModel.onAppClicked(app)
+                                        context.startActivity(it)
+                                    }
+                                },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
+                                Image(
+                                    bitmap = bmp.asImageBitmap(),
+                                    contentDescription = app.name,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = app.name,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Search Bar Area
