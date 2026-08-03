@@ -54,6 +54,7 @@ import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.runtime.mutableStateMapOf
 import kotlin.math.absoluteValue
@@ -201,10 +202,11 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                                     if (rect.bottom > maxY) maxY = rect.bottom
                                 }
                                 if (minX < maxX && minY < maxY) {
-                                    drawRect(
+                                    drawRoundRect(
                                         color = Color(0xFF9C27B0),
                                         topLeft = Offset(minX, minY),
                                         size = Size(maxX - minX, maxY - minY),
+                                        cornerRadius = CornerRadius(14.dp.toPx(), 14.dp.toPx()),
                                         style = Stroke(width = 3.dp.toPx())
                                     )
                                 }
