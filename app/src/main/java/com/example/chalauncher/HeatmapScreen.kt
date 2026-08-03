@@ -181,6 +181,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
             TreemapLayout(modifier = Modifier.fillMaxSize(), items = apps) { app ->
                 val intensity = (app.clickCount.toFloat() / maxClicks).coerceIn(0.2f, 1f)
                 val backgroundColor = Color(0xFF4CAF50).copy(alpha = intensity)
+                val isSmallApp = app.clickCount <= 6
 
                 BoxWithConstraints(
                     modifier = Modifier
@@ -188,6 +189,13 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                         .padding(2.dp)
                         .shadow(6.dp, RoundedCornerShape(12.dp))
                         .background(backgroundColor, RoundedCornerShape(12.dp))
+                        .then(
+                            if (isSmallApp) {
+                                Modifier.border(2.dp, Color(0xFF9C27B0), RoundedCornerShape(12.dp))
+                            } else {
+                                Modifier
+                            }
+                        )
                         .clip(RoundedCornerShape(12.dp))
                         .combinedClickable(
                             onClick = {
