@@ -193,7 +193,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                         val isSmallApp = app.clickCount <= 6
                         val intensity = (app.clickCount.toFloat() / maxClicks).coerceIn(0.2f, 1f)
                         val backgroundColor = if (isSmallApp) {
-                            Color(0xFF9C27B0).copy(alpha = 0.3f)
+                            Color(0xFF9C27B0).copy(alpha = 0.6f)
                         } else {
                             Color(0xFF4CAF50).copy(alpha = intensity)
                         }
