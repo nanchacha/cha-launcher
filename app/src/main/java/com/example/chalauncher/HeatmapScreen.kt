@@ -195,7 +195,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                         )
                 ) {
                     val boxSize = minOf(maxWidth, maxHeight)
-                    val iconSize = (boxSize * 0.6f).coerceIn(24.dp, 160.dp)
+                    val iconSize = (boxSize * 0.6f).coerceIn(36.dp, 120.dp)
                     val bitmapSize = iconSize.value.toInt().coerceAtLeast(120) * 2 // Ensure good resolution
 
                     Column(
