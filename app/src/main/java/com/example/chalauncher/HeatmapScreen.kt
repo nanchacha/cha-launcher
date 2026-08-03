@@ -49,6 +49,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.runtime.mutableStateMapOf
 import kotlin.math.absoluteValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -177,25 +184,51 @@ fun HeatmapScreen(viewModel: MainViewModel) {
         HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
             if (page == 0) {
                 // Background Treemap
+                val smallAppBounds = remember { mutableStateMapOf<String, androidx.compose.ui.geometry.Rect>() }
                 Box(modifier = Modifier.fillMaxSize()) {
-            TreemapLayout(modifier = Modifier.fillMaxSize(), items = apps) { app ->
-                val intensity = (app.clickCount.toFloat() / maxClicks).coerceIn(0.2f, 1f)
-                val backgroundColor = Color(0xFF4CAF50).copy(alpha = intensity)
-                val isSmallApp = app.clickCount <= 6
+                    TreemapLayout(
+                        modifier = Modifier.fillMaxSize().drawWithContent {
+                            drawContent()
+                            if (smallAppBounds.isNotEmpty()) {
+                                var minX = Float.MAX_VALUE
+                                var minY = Float.MAX_VALUE
+                                var maxX = -Float.MAX_VALUE
+                                var maxY = -Float.MAX_VALUE
+                                smallAppBounds.values.forEach { rect ->
+                                    if (rect.left < minX) minX = rect.left
+                                    if (rect.top < minY) minY = rect.top
+                                    if (rect.right > maxX) maxX = rect.right
+                                    if (rect.bottom > maxY) maxY = rect.bottom
+                                }
+                                if (minX < maxX && minY < maxY) {
+                                    drawRect(
+                                        color = Color(0xFF9C27B0),
+                                        topLeft = Offset(minX, minY),
+                                        size = Size(maxX - minX, maxY - minY),
+                                        style = Stroke(width = 3.dp.toPx())
+                                    )
+                                }
+                            }
+                        },
+                        items = apps
+                    ) { app ->
+                        val intensity = (app.clickCount.toFloat() / maxClicks).coerceIn(0.2f, 1f)
+                        val backgroundColor = Color(0xFF4CAF50).copy(alpha = intensity)
+                        val isSmallApp = app.clickCount <= 6
 
                 BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(2.dp)
+                        .onGloballyPositioned { coordinates ->
+                            if (isSmallApp) {
+                                smallAppBounds[app.packageName] = coordinates.boundsInParent()
+                            } else {
+                                smallAppBounds.remove(app.packageName)
+                            }
+                        }
                         .shadow(6.dp, RoundedCornerShape(12.dp))
                         .background(backgroundColor, RoundedCornerShape(12.dp))
-                        .then(
-                            if (isSmallApp) {
-                                Modifier.border(2.dp, Color(0xFF9C27B0), RoundedCornerShape(12.dp))
-                            } else {
-                                Modifier
-                            }
-                        )
                         .clip(RoundedCornerShape(12.dp))
                         .combinedClickable(
                             onClick = {
