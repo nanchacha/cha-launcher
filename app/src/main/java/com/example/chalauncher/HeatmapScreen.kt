@@ -246,9 +246,7 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                 val scale = 1f - (pageOffset.absoluteValue * 0.3f).coerceIn(0f, 0.3f)
                 val alpha = 1f - (pageOffset.absoluteValue).coerceIn(0f, 1f)
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    contentPadding = PaddingValues(16.dp),
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
@@ -257,34 +255,56 @@ fun HeatmapScreen(viewModel: MainViewModel) {
                             this.alpha = alpha
                         }
                 ) {
-                    items(smallApps) { app ->
-                        Column(
+                    TreemapLayout(modifier = Modifier.fillMaxSize(), items = smallApps) { app ->
+                        val intensity = (app.clickCount.toFloat() / maxClicks).coerceIn(0.2f, 1f)
+                        val backgroundColor = Color(0xFF4CAF50).copy(alpha = intensity)
+        
+                        BoxWithConstraints(
                             modifier = Modifier
-                                .padding(8.dp)
-                                .clickable {
-                                    app.launchIntent?.let {
-                                        viewModel.onAppClicked(app)
-                                        context.startActivity(it)
+                                .fillMaxSize()
+                                .padding(2.dp)
+                                .shadow(6.dp, RoundedCornerShape(12.dp))
+                                .background(backgroundColor, RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(12.dp))
+                                .combinedClickable(
+                                    onClick = {
+                                        app.launchIntent?.let {
+                                            viewModel.onAppClicked(app)
+                                            context.startActivity(it)
+                                        }
+                                    },
+                                    onLongClick = {
+                                        appToRemove = app
                                     }
-                                },
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                )
                         ) {
-                            app.icon.toBitmap(width = 120, height = 120)?.let { bmp ->
-                                Image(
-                                    bitmap = bmp.asImageBitmap(),
-                                    contentDescription = app.name,
-                                    modifier = Modifier.size(64.dp)
+                            val boxSize = minOf(maxWidth, maxHeight)
+                            val iconSize = (boxSize * 0.6f).coerceIn(36.dp, 120.dp)
+                            val bitmapSize = iconSize.value.toInt().coerceAtLeast(120) * 2
+        
+                            Column(
+                                modifier = Modifier.align(Alignment.Center),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                app.icon.toBitmap(width = bitmapSize, height = bitmapSize)?.let { bmp ->
+                                    Image(
+                                        bitmap = bmp.asImageBitmap(),
+                                        contentDescription = app.name,
+                                        modifier = Modifier
+                                            .size(iconSize)
+                                            .padding(4.dp)
+                                    )
+                                }
+                                Text(
+                                    text = app.name,
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = app.name,
-                                fontSize = 12.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
                         }
                     }
                 }
